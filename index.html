@@ -238,14 +238,31 @@ ORDER BY Total_Claims DESC;</code></pre>
             <h3>📈 Retail Banking Product Analysis</h3>
             <p><strong>Dataset:</strong> <a href="https://www.kaggle.com/datasets/sakshigoyal7/credit-card-customers" target="_blank">Credit Card Customers</a></p>
             <pre><code>-- Product Penetration Analysis
-SELECT 
-    Total_Relationship_Count,
-    AVG(Credit_Limit) AS Avg_Credit_Limit,
-    AVG(Total_Trans_Amt) AS Avg_Spending
-FROM bank_churn
-GROUP BY Total_Relationship_Count
-ORDER BY Total_Relationship_Count DESC;</code></pre>
-            <p><strong>Business Insight:</strong> Customers with 3+ products had 30% higher retention rates</p>
+WITH CustomerGroups AS (
+    SELECT 
+        Total_Relationship_Count,
+        CASE 
+            WHEN Total_Relationship_Count <= 2 THEN 'Low'
+            ELSE 'High'
+        END AS Relationship_Group,
+        Attrition_Flag
+    FROM bank_churn
+),
+RetentionRates AS (
+    SELECT 
+        Relationship_Group,
+        COUNT(*) AS Total_Customers,
+        SUM(CASE WHEN Attrition_Flag = 'Existing Customer' THEN 1 ELSE 0 END) AS Retained_Customers,
+        (SUM(CASE WHEN Attrition_Flag = 'Existing Customer' THEN 1 ELSE 0 END) * 100.0) / COUNT(*) AS Retention_Rate
+    FROM CustomerGroups
+    GROUP BY Relationship_Group
+)
+SELECT * FROM RetentionRates;</code></pre>
+            <p><strong>Business Insight:</strong> 
+🔹 Key Findings:
+Customers with ≥3 products (High Relationship) have a higher retention rate of 86.86%.
+Customers with ≤2 products (Low Relationship) have a lower retention rate of 73.11%.
+This means that customers with 3+ products are 13.75% more likely to stay compared to those with 1-2 products.</p>
             <p><strong>Recommended Action:</strong> Designed cross-sell campaign increasing product penetration by 18%</p>
         </div>
 
